@@ -2,6 +2,7 @@ require 'io/console'
 require 'pry'
 require 'colorize'
 
+
 class TwentyFourtyEight
 
   def initialize
@@ -18,7 +19,7 @@ class TwentyFourtyEight
       [0, 0, 0, 0],
     ]
 
-    @grid = complex_grid
+    @grid = blank_grid
     @score = 0
     @messages = []
   end
@@ -372,7 +373,7 @@ class TwentyFourtyEight
     end
   end
 
-  end
+end
 
 game = TwentyFourtyEight.new
 game.run_game
