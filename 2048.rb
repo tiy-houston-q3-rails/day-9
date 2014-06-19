@@ -2,7 +2,6 @@ require 'io/console'
 require 'pry'
 require 'colorize'
 
-
 class TwentyFourtyEight
 
   def initialize
@@ -22,6 +21,41 @@ class TwentyFourtyEight
     @grid = blank_grid
     @score = 0
     @messages = []
+  end
+
+  def run_game
+
+    2.times do
+      add_random_to_grid
+    end
+
+    until game_is_over?
+      system "clear" or system "cls"
+      print_header
+      print_messages
+      print_grid
+      move = STDIN.getch
+
+      original_grid_values = @grid.flatten
+      apply_move_to_grid(move)
+      if original_grid_values != @grid.flatten
+        add_random_to_grid
+      end
+
+    end
+    system "clear" or system "cls"
+    print_header
+    print_messages
+    print_grid
+
+    puts "-----------------------------------"
+    puts "[                                 ]"
+    puts "[            SO SORRY!!!!!        ]"
+    puts "[                                 ]"
+    puts "-----------------------------------"
+
+
+
   end
 
   def swap(args)
@@ -44,55 +78,36 @@ class TwentyFourtyEight
     row[column] = value
   end
 
+
+
   def move_left
 
     columns = [0, 1, 2]
     rows = [0, 1, 2, 3]
 
-    # combine down errthing
-    @grid.each_with_index do |row, row_index|
-      row.each_with_index do |value, column_index|
-        cell=[row_index, column_index]
-        destination = [row_index, column_index - 1]
-        compare_and_combine(cell: cell, destination: destination, value: value)
-      end
+    for_each_cell_move_to_destination do |cell|
+      destination = [cell.first, cell.last - 1]
     end
 
-    3.times do
-      columns.each do |column_number|
-        rows.each do |row_number|
-          if value_at([row_number, column_number]) == 0
-            swap(position: [row_number,column_number + 1], destination: [row_number,column_number])
-          end
-        end
-      end
+    for_each_by_column_if_equal(columns: columns, rows: rows) do |row_number, column_number|
+      swap(position: [row_number,column_number + 1], destination: [row_number,column_number])
     end
 
   end
+
+
 
   def move_right
 
     columns = [3, 2, 1]
     rows = [0, 1, 2, 3]
 
-    # combine down errthing
-    @grid.each_with_index do |row, row_index|
-      row.each_with_index do |value, column_index|
-        cell=[row_index, column_index]
-        destination = [row_index, column_index + 1]
-        compare_and_combine(cell: cell, destination: destination, value: value)
-
-      end
+    for_each_cell_move_to_destination do |cell|
+      destination = [cell.first, cell.last + 1]
     end
 
-    3.times do
-      columns.each do |column_number|
-        rows.each do |row_number|
-          if value_at([row_number, column_number]) == 0
-            swap(position: [row_number,column_number -1], destination: [row_number,column_number])
-          end
-        end
-      end
+    for_each_by_column_if_equal(columns: columns, rows: rows) do |row_number, column_number|
+      swap(position: [row_number,column_number -1], destination: [row_number,column_number])
     end
 
   end
@@ -102,23 +117,12 @@ class TwentyFourtyEight
     columns = [0, 1, 2, 3]
     rows = [3, 2, 1]
 
-    # combine down errthing
-    @grid.each_with_index do |row, row_index|
-      row.each_with_index do |value, column_index|
-        cell=[row_index, column_index]
-        destination = [row_index + 1, column_index]
-        compare_and_combine(cell: cell, destination: destination, value: value)
-      end
+    for_each_cell_move_to_destination do |cell|
+      destination = [cell.first + 1, cell.last]
     end
 
-    3.times do
-      columns.each do |column_number|
-        rows.each do |row_number|
-          if value_at([row_number, column_number]) == 0
-            swap(position: [row_number-1,column_number], destination: [row_number,column_number])
-          end
-        end
-      end
+    for_each_by_column_if_equal(columns: columns, rows: rows) do |row_number, column_number|
+      swap(position: [row_number-1,column_number], destination: [row_number,column_number])
     end
 
   end
@@ -128,26 +132,16 @@ class TwentyFourtyEight
     columns = [0, 1, 2, 3]
     rows = [0, 1, 2]
 
-    # combine down errthing
-    @grid.each_with_index do |row, row_index|
-      row.each_with_index do |value, column_index|
-        cell=[row_index, column_index]
-        destination = [row_index - 1, column_index]
-        compare_and_combine(cell: cell, destination: destination, value: value)
-      end
+    for_each_cell_move_to_destination do |cell|
+      destination = [cell.first - 1, cell.last]
     end
 
-    3.times do
-      columns.each do |column_number|
-        rows.each do |row_number|
-          if value_at([row_number, column_number]) == 0
-            swap(position: [row_number + 1,column_number], destination: [row_number,column_number])
-          end
-        end
-      end
+    for_each_by_column_if_equal(columns: columns, rows: rows) do |row, column|
+      swap(position: [row+1, column], destination: [row, column])
     end
 
   end
+
 
   # example of keyword arguments in ruby
   def compare_and_combine(cell:, destination:, value:)
@@ -273,40 +267,35 @@ class TwentyFourtyEight
     end
   end
 
-  def run_game
+  def for_each_cell_move_to_destination
+    # combine down errthing
+    @grid.each_with_index do |row, row_index|
+      row.each_with_index do |value, column_index|
 
-    2.times do
-      add_random_to_grid
-    end
+        cell=[row_index, column_index]
 
-    until game_is_over?
-      system "clear" or system "cls"
-      print_header
-      print_messages
-      print_grid
-      move = STDIN.getch
+        destination=yield(cell)
 
-      original_grid_values = @grid.flatten
-      apply_move_to_grid(move)
-      if original_grid_values != @grid.flatten
-        add_random_to_grid
+        compare_and_combine(cell: cell,
+                            destination: destination,
+                            value: value)
       end
-
     end
-    system "clear" or system "cls"
-    print_header
-    print_messages
-    print_grid
-
-    puts "-----------------------------------"
-    puts "[                                 ]"
-    puts "[            SO SORRY!!!!!        ]"
-    puts "[                                 ]"
-    puts "-----------------------------------"
-
-
-
   end
+
+  def for_each_by_column_if_equal(columns:, rows:)
+    3.times do
+      columns.each do |column_number|
+        rows.each do |row_number|
+          if value_at([row_number, column_number]) == 0
+            yield(row_number, column_number)
+          end
+        end
+      end
+    end
+  end
+
+
 
   def print_messages
     @messages.each do |message|
